@@ -1,0 +1,216 @@
+---
+
+---
+
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Randomizador de Libros</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --background-color: #f0f3f5;
+            --text-color: #34495e;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px var(--shadow-color);
+            padding: 2rem;
+            width: 100%;
+            max-width: 500px;
+            margin: 1rem;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .input-group {
+            display: flex;
+            margin-bottom: 1rem;
+        }
+
+        input {
+            flex-grow: 1;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px 0 0 4px;
+            font-size: 1rem;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        #addBook {
+            border-radius: 0 4px 4px 0;
+        }
+
+        #randomize {
+            background-color: var(--secondary-color);
+            width: 100%;
+            border-radius: 4px;
+            margin-top: 1rem;
+        }
+
+        #randomize:hover {
+            background-color: #27ae60;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+            margin-bottom: 1rem;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        li {
+            background-color: #ecf0f1;
+            margin: 0.5rem 0;
+            padding: 0.5rem;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        li button {
+            background-color: #e74c3c;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+        }
+
+        li button:hover {
+            background-color: #c0392b;
+        }
+
+        #result {
+            text-align: center;
+            font-weight: 600;
+            margin-top: 1rem;
+            min-height: 1.6em;
+        }
+
+        .icon {
+            width: 1em;
+            height: 1em;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📚 Randomizador de Libros</h1>
+        <div class="input-group">
+            <input type="text" id="bookInput" placeholder="Ingresa el título de un libro">
+            <button id="addBook">
+                <i data-lucide="plus" class="icon"></i> Añadir
+            </button>
+        </div>
+        <ul id="bookList"></ul>
+        <button id="randomize">
+            <i data-lucide="shuffle" class="icon"></i> Elegir Libro Aleatorio
+        </button>
+        <p id="result"></p>
+    </div>
+
+    <script>
+        import { createIcons } from 'lucide';
+        document.addEventListener("DOMContentLoaded", () => {
+            let books: string[] = JSON.parse(localStorage.getItem('books') || '[]');
+
+            const bookInput = document.getElementById('bookInput') as HTMLInputElement;
+            const addBookBtn = document.getElementById('addBook') as HTMLButtonElement;
+            const bookList = document.getElementById('bookList') as HTMLUListElement;
+            const randomizeBtn = document.getElementById('randomize') as HTMLButtonElement;
+            const result = document.getElementById('result') as HTMLDivElement;
+
+            function updateBookList(): void {
+                bookList.innerHTML = '';
+                books.forEach((book, index) => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        ${book}
+                        <button class="remove-book" data-index="${index}">
+                            <i data-lucide="x" class="icon">X</i>
+                        </button>
+                    `;
+                    bookList.appendChild(li);
+                });
+                localStorage.setItem('books', JSON.stringify(books));
+                createIcons();
+            }
+
+            addBookBtn.addEventListener('click', () => {
+                const book = bookInput.value.trim();
+                if (book) {
+                    books.push(book);
+                    bookInput.value = '';
+                    updateBookList();
+                }
+            });
+
+            bookList.addEventListener('click', (e: MouseEvent) => {
+                const target = e.target as HTMLElement;
+                if (target.classList.contains('remove-book') || target.closest('.remove-book')) {
+                    const removeButton = target.closest('.remove-book') as HTMLButtonElement;
+                    const index = parseInt(removeButton.dataset.index!, 10);
+                    books.splice(index, 1);
+                    updateBookList();
+                }
+            });
+
+            randomizeBtn.addEventListener('click', () => {
+                if (books.length > 0) {
+                    const randomIndex = Math.floor(Math.random() * books.length);
+                    const selectedBook = books[randomIndex];
+                    result.textContent = `Libro elegido: ${selectedBook}`;
+                    result.style.color = 'var(--secondary-color)';
+                    books.splice(randomIndex, 1);
+                    updateBookList();
+                } else {
+                    result.textContent = 'No hay libros en la lista.';
+                    result.style.color = 'var(--text-color)';
+                }
+            });
+
+            updateBookList();
+            createIcons(); 
+        });
+
+    </script>
+</body>
+</html>
